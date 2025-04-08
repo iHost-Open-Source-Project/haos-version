@@ -2,7 +2,7 @@ name: Update stable.json and DingTalk Notification
 
 on:
   schedule:
-    - cron: '0 1 * * *'  # Runs every day at 9 AM Beijing time (UTC+8), corresponding to UTC time 1:00
+    - cron: '0 1 * * *'
   workflow_dispatch:
 
 jobs:
@@ -27,21 +27,20 @@ jobs:
             echo "Error: stable.json file does not exist!"
             exit 1
           fi
-          # Extract the homeassistant field from the remote file
           NEW_HOME=$(jq '.homeassistant' remote-stable.json)
-          # Use jq to replace the homeassistant field in the local stable.json, only updating that field, keeping others unchanged
           jq --argjson newHome "$NEW_HOME" '.homeassistant = $newHome' stable.json > stable_new.json
           mv stable_new.json stable.json
           echo "Updated homeassistant field content:"
           jq '.homeassistant' stable.json
+          rm -f remote-stable.json
 
       - name: Commit and Push changes
         id: commit_check
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          # Use GITHUB_TOKEN for pushing the changes
-          if [ -n "$(git status --porcelain)" ]; then
+
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
             git add stable.json
             git commit -m "Sync stable.json homeassistant core version"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
@@ -52,11 +51,9 @@ jobs:
           fi
 
       - name: Send DingTalk notification
-        if: ${{ steps.commit_check.outputs.update == 'true' }}  # Only run this step if there was an update
+        if: ${{ steps.commit_check.outputs.update == 'true' }}
         run: |
-          # Single line message, depending on whether the content was updated
           MESSAGE_TEXT="stable.json: homeassistant field has been updated"
-          # Construct the DingTalk text message payload
           PAYLOAD=$(jq -n --arg text "$MESSAGE_TEXT" '{
             "msgtype": "text",
             "text": {
@@ -64,5 +61,4 @@ jobs:
             }
           }')
           echo "Sending DingTalk notification: $MESSAGE_TEXT"
-          # Use the DingTalk webhook URL stored in GitHub Secrets
           curl -s -H "Content-Type: application/json" -d "$PAYLOAD" "${{ secrets.DINGTALK_WEBHOOK }}"
