@@ -107,16 +107,21 @@ jobs:
 
       - name: Send DingTalk notification
         run: |
-          # Prepare and send the DingTalk payload
-          MESSAGE_TEXT="${{ steps.compare_and_update.outputs.message }}"
-          PAYLOAD=$(jq -n --arg text "$MESSAGE_TEXT" '{
+          ORIG_TEXT="${{ steps.compare_and_update.outputs.message }}"
+          KEYWORD="StableSync"
+          FULL_TEXT="${KEYWORD}\n${ORIG_TEXT}\n@all"
+
+          PAYLOAD=$(jq -n --arg text "$FULL_TEXT" '{
             "msgtype": "text",
             "text": {
               "content": $text
             },
-            "at": {
-              "isAtAll": true
-            }
+            "at": { "isAtAll": true }
           }')
-          echo "Sending DingTalk notification: $MESSAGE_TEXT"
-          curl -s -H "Content-Type: application/json" -d "$PAYLOAD" "${{ secrets.DINGTALK_WEBHOOK }}"
+
+          echo "Sending DingTalk notification:"
+          echo "$FULL_TEXT"
+
+          curl -s -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
+               "${{ secrets.DINGTALK_WEBHOOK }}"
