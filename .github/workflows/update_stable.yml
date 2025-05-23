@@ -15,49 +15,107 @@ jobs:
 
       - name: Fetch remote stable.json
         run: |
+          # Fetch the remote stable.json from Home Assistant
           REMOTE_URL="https://version.home-assistant.io/stable.json"
           echo "Fetching stable.json from remote URL: $REMOTE_URL"
           curl -sL "$REMOTE_URL" -o remote-stable.json
           echo "Fetched remote file contents:"
           cat remote-stable.json
 
-      - name: Update local stable.json homeassistant field
+      - name: Compare fields and update stable.json
+        id: compare_and_update
         run: |
-          if [ ! -f stable.json ]; then
-            echo "Error: stable.json file does not exist!"
+          # Define file paths
+          LOCAL_FILE="stable.json"
+          REMOTE_FILE="remote-stable.json"
+
+          # Ensure local stable.json exists
+          if [ ! -f "$LOCAL_FILE" ]; then
+            echo "Error: $LOCAL_FILE does not exist!"
             exit 1
           fi
-          NEW_HOME=$(jq '.homeassistant' remote-stable.json)
-          jq --argjson newHome "$NEW_HOME" '.homeassistant = $newHome' stable.json > stable_new.json
-          mv stable_new.json stable.json
-          echo "Updated homeassistant field content:"
-          jq '.homeassistant' stable.json
-          rm -f remote-stable.json
 
-      - name: Commit and Push changes
-        id: commit_check
+          # Extract homeassistant core versions
+          LOCAL_HOME=$(jq '.homeassistant' "$LOCAL_FILE")
+          REMOTE_HOME=$(jq '.homeassistant' "$REMOTE_FILE")
+
+          # Determine if homeassistant field has changed
+          homeassistant_diff=false
+          if [ "$LOCAL_HOME" != "$REMOTE_HOME" ]; then
+            homeassistant_diff=true
+            # Update the local file's homeassistant field
+            jq --argjson newHome "$REMOTE_HOME" '.homeassistant = $newHome' "$LOCAL_FILE" > temp.json
+            mv temp.json "$LOCAL_FILE"
+          fi
+
+          # Extract supervisor fields from top-level
+          LOCAL_SUPERVISOR=$(jq -r '.supervisor' "$LOCAL_FILE")
+          REMOTE_SUPERVISOR=$(jq -r '.supervisor' "$REMOTE_FILE")
+
+          # Determine if supervisor field has changed
+          supervisor_diff=false
+          if [ "$LOCAL_SUPERVISOR" != "$REMOTE_SUPERVISOR" ]; then
+            supervisor_diff=true
+          fi
+
+          # Build DingTalk message
+          MESSAGE_TEXT=""
+          if [ "$homeassistant_diff" = "true" ]; then
+            MESSAGE_TEXT="stable.json: homeassistant field has been updated"
+          fi
+          if [ "$supervisor_diff" = "true" ]; then
+            if [ -n "$MESSAGE_TEXT" ]; then
+              MESSAGE_TEXT="${MESSAGE_TEXT}"$'\n'"Supervisor field is different from the remote stable.json!"
+            else
+              MESSAGE_TEXT="Supervisor field is different from the remote stable.json!"
+            fi
+          fi
+          if [ -z "$MESSAGE_TEXT" ]; then
+            MESSAGE_TEXT="No updates to homeassistant or supervisor field, just a regular check."
+          fi
+          # Append mention of all
+          MESSAGE_TEXT="${MESSAGE_TEXT}"$'\n'"@all"
+
+          # Export outputs for later steps
+          echo "homeassistant_diff=$homeassistant_diff" >> "$GITHUB_OUTPUT"
+          echo "supervisor_diff=$supervisor_diff" >> "$GITHUB_OUTPUT"
+          echo "message=$MESSAGE_TEXT" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and Push changes if needed
+        id: commit_and_push
         run: |
+          # Configure git author
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+          # Only commit if homeassistant field was updated
+          if [ "${{ steps.compare_and_update.outputs.homeassistant_diff }}" = "true" ]; then
             git add stable.json
             git commit -m "Sync stable.json homeassistant core version"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
-            echo "update=true" >> $GITHUB_OUTPUT
+            # Push to the same branch that triggered the workflow
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+            echo "update=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No changes detected, no need to commit."
-            echo "update=false" >> $GITHUB_OUTPUT
+            echo "No changes to homeassistant field; skipping commit." 
+            echo "update=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Send DingTalk notification
-        if: ${{ steps.commit_check.outputs.update == 'true' }}
+      - name: Clean up remote-stable.json
         run: |
-          MESSAGE_TEXT="stable.json: homeassistant field has been updated"
+          # Remove fetched remote file
+          rm -f remote-stable.json
+
+      - name: Send DingTalk notification
+        run: |
+          # Prepare and send the DingTalk payload
+          MESSAGE_TEXT="${{ steps.compare_and_update.outputs.message }}"
           PAYLOAD=$(jq -n --arg text "$MESSAGE_TEXT" '{
             "msgtype": "text",
             "text": {
               "content": $text
+            },
+            "at": {
+              "isAtAll": true
             }
           }')
           echo "Sending DingTalk notification: $MESSAGE_TEXT"
