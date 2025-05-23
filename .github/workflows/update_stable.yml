@@ -109,7 +109,7 @@ jobs:
         run: |
           ORIG_TEXT="${{ steps.compare_and_update.outputs.message }}"
           KEYWORD="StableSync"
-          FULL_TEXT="${KEYWORD}\n${ORIG_TEXT}\n@all"
+          FULL_TEXT="检测通知：${KEYWORD}\n${ORIG_TEXT}"
 
           PAYLOAD=$(jq -n --arg text "$FULL_TEXT" '{
             "msgtype": "text",
