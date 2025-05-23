@@ -74,7 +74,7 @@ jobs:
             MESSAGE_TEXT="No updates to homeassistant or supervisor field, just a regular check."
           fi
           # Append mention of all
-          MESSAGE_TEXT="${MESSAGE_TEXT}"$'\n'"@all"
+          MESSAGE_TEXT="${MESSAGE_TEXT}"
 
           # Export outputs for later steps
           echo "homeassistant_diff=$homeassistant_diff" >> "$GITHUB_OUTPUT"
