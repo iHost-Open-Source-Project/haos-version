@@ -108,15 +108,11 @@ jobs:
           if [ "${{ steps.compare_core.outputs.homeassistant_diff }}" == 'true' ]; then
                message_body+="**Homeassistant Core版本号已同步更新:** \n\n **版本信息:**\n\n"
     
-              # 解析本地和远程版本JSON数据
               local_versions='${{ steps.local.outputs.local_home }}'
               remote_versions='${{ steps.remote.outputs.remote_home }}' 
           
-              # 使用jq工具处理JSON数据
-              # 注意：需要确保工作流环境中已安装jq
               platforms=$(echo "$local_versions" | jq -r 'keys_unsorted[]' | sort)
-    
-              # 遍历每个平台，生成格式化消息
+
               while IFS= read -r platform; do
                   local_version=$(echo "$local_versions" | jq -r ".[\"$platform\"]")
                   remote_version=$(echo "$remote_versions" | jq -r ".[\"$platform\"]")
