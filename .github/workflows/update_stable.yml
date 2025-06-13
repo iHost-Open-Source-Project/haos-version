@@ -150,7 +150,7 @@ jobs:
               "text": "**🔎 Haos-version版本更新检测推送** \n\n 🚀 **检测时间: $timestamp**\n\n${{ steps.message.outputs.message_body }}"
             },
             "at": {
-              "isAtAll": false
+              "isAtAll": true
             }
           }
           EOF
