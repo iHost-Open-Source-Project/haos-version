@@ -69,7 +69,7 @@ jobs:
           echo "remote_home：$REMOTE_HOME"
           echo "remote_supervisor：$REMOTE_SUPERVISOR"
 
-      - name: Compare homeassistant core versions & update stable.json
+      - name: Compare homeassistant core versions & update stable.json & dev.json
         id: compare_core
         run: |
           LOCAL_FILE="${{steps.fetch.outputs.LOCAL_FILE}}"
@@ -78,7 +78,9 @@ jobs:
             homeassistant_diff=true
             # Update the local file's homeassistant field
             jq --argjson newHome '${{steps.remote.outputs.remote_home}}' '.homeassistant = $newHome' "$LOCAL_FILE" > temp.json
+            jq --argjson newHome '${{steps.remote.outputs.remote_home}}' '.homeassistant = $newHome' "dev.json" > temp_1.json
             mv temp.json "$LOCAL_FILE"
+            mv temp_1.json "dev.json"
           fi
           echo "homeassistant_diff=$homeassistant_diff" >>  "$GITHUB_OUTPUT"
           echo "homeassistant_diff=$homeassistant_diff"
@@ -171,7 +173,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add stable.json
+          git add stable.json dev.json
           git commit -m "Sync stable.json homeassistant core version"
           git push
           echo "update=true" >> "$GITHUB_OUTPUT"
