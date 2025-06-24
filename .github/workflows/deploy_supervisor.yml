@@ -1,0 +1,65 @@
+name: Deploy Supervisor
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release Tag (e.g., 2025.05.5)'
+        required: true
+        default: '2025.05.5'
+
+jobs:
+  deploy-to-dev:
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+      url: https://github.com/iHost-Open-Source-Project/haos-version/blob/main/dev.json
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+
+      - name: Update dev.json
+        run: |
+          # 读取并更新JSON文件
+          echo "Updating supervisor version to ${{ inputs.tag }}"
+          jq '.supervisor = "${{ inputs.tag }}"' dev.json > dev.tmp.json
+          mv dev.tmp.json dev.json
+
+          # 查看更新后的内容
+          cat dev.json
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add dev.json
+          git commit -m "Update supervisor - dev to ${{ inputs.tag }}"
+          git push
+
+  deploy-to-stable:
+    needs: deploy-to-dev
+    runs-on: ubuntu-latest
+    environment:
+      name: stable
+      url: https://github.com/iHost-Open-Source-Project/haos-version/blob/main/stable.json
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+
+      - name: Update dev.json
+        run: |
+          # 读取并更新JSON文件
+          echo "Updating supervisor version to ${{ inputs.tag }}"
+          jq '.supervisor = "${{ inputs.tag }}"' stable.json > stable.tmp.json
+          mv stable.tmp.json stable.json
+
+          # 查看更新后的内容
+          cat stable.json
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add stable.json
+          git commit -m "Update supervisor - stable to ${{ inputs.tag }}"
+          git push
