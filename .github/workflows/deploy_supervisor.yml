@@ -32,7 +32,7 @@ jobs:
           message_body+="- **发起人**:[ **${{ github.event.actor.name || github.actor }}** ] \n\n"
           message_body+="- **发起时间**:[ **$timestamp** ] \n\n "
           message_body+="#### **🔗 操作入口**   \n\n"
-          message_body+="- **✅ 审批链接**：**[点击跳转至审批确认页](https://github.com/iHost-Open-Source-Project/${{ github.repository }}/actions/runs/${{ github.run_id }})** \n\n"
+          message_body+="- **✅ 审批链接**：**[点击跳转至审批确认页](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})** \n\n"
  
           echo "message_title=$message_title" >> $GITHUB_OUTPUT
           echo "message_body<<EOF" >> $GITHUB_OUTPUT
