@@ -1,0 +1,70 @@
+name: Send Notify
+inputs:
+  env:
+    description: "Target to deploy"
+    required: true
+    example: "DEV"
+  version:
+    description: "Version to deploy"
+    required: true
+    example: "2025.6.1"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate DingTalk message
+      id: message
+      run: |
+        environment=""
+        path=""
+        if [ "${{ inputs.env }}" = "DEV" ]; then
+          environment+="DEV(开发环境)"
+          path+="dev.json"
+        fi
+        if [ "${{ inputs.env }}" = "STABLE" ]; then
+          environment+="STABLE(生产环境)"
+          path+="stable.json"
+        fi
+        
+        timestamp=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S%:z")
+        local_version=$(jq -r '.supervisor' "$path")
+        message_title="新版本Supervisor-Deploy审批通知"
+        message_body="---------------------------------------\n\n"
+        message_body+="#### **📌 部署信息** \n\n"
+        message_body+="- **环境类型**:[ **$environment** ] \n\n"
+        message_body+="- **部署组件**:[ **Supervisor** ] \n\n"
+        message_body+="- **当前版本**:[ **$local_version** ] \n\n"
+        message_body+="- **部署版本**:[ **[${{ inputs.tag }}](https://github.com/iHost-Open-Source-Project/ha-supervisor/tree/ihost-${{ inputs.tag }})** ] \n\n"
+        message_body+="---------------------------------------\n\n"
+        message_body+="#### **👤 审批发起信息**  \n\n"
+        message_body+="- **发起人**:[ **${{ github.event.actor.name || github.actor }}** ] \n\n"
+        message_body+="- **发起时间**:[ **$timestamp** ] \n\n "
+        message_body+="#### **🔗 操作入口**   \n\n"
+        message_body+="- **✅ 审批链接**：**[点击跳转至审批确认页](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})** \n\n"
+        
+        echo "message_title=$message_title" >> $GITHUB_OUTPUT
+        echo "message_body<<EOF" >> $GITHUB_OUTPUT
+        echo "$message_body" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        echo "message: $message_body"
+
+    - name: Send DingTalk notification
+      id: send
+      run: |
+        message=$(cat <<EOF
+        {
+          "msgtype": "markdown",
+          "markdown": {
+            "title": "${{ steps.message.outputs.message_title }}",
+            "text": "### ⚙️ **${{ inputs.env }}环境Supervisor部署审批申请**  \n\n ${{ steps.message.outputs.message_body }}"
+          },
+          "at": {
+            "isAtAll": true
+          }
+        }
+        EOF
+        )
+        
+        response=$(curl -s -X POST "${{ secrets.DINGTALK_WEBHOOK }}" \
+          -H "Content-Type: application/json" \
+          -d "$message")
