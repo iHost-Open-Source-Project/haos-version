@@ -22,8 +22,8 @@ jobs:
         uses: docker/login-action@v3.4.0
         with:
           registry: ghcr.io
-          username: ${{ secrets.ACTOR }}
-          password: ${{ secrets.PAT }}
+          username: ${{ secrets.MOSUXIAO_ACTOR }}
+          password: ${{ secrets.MOSUXIAO_TOKEN }}
 
       - name: Pull the image
         run: |
@@ -66,8 +66,8 @@ jobs:
         uses: docker/login-action@v3.4.0
         with:
           registry: ghcr.io
-          username: ${{ secrets.ACTOR }}
-          password: ${{ secrets.PAT }}
+          username: ${{ secrets.MOSUXIAO_ACTOR }}
+          password: ${{ secrets.MOSUXIAO_TOKEN }}
 
       - name: Pull the image
         run: |
