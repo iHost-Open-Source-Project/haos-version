@@ -1,5 +1,9 @@
 name: Send Notify
 inputs:
+  category:
+    description: "Message category"
+    required: true
+    example: "apply"
   env:
     description: "Target to deploy"
     required: true
@@ -17,30 +21,41 @@ runs:
       run: |
         environment=""
         path=""
+        
         if [ "${{ inputs.env }}" = "DEV" ]; then
           environment+="DEV(开发环境)"
           path+="dev.json"
         fi
+        
         if [ "${{ inputs.env }}" = "STABLE" ]; then
           environment+="STABLE(生产环境)"
           path+="stable.json"
         fi
         
         timestamp=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S%:z")
-        local_version=$(jq -r '.supervisor' "$path")
-        message_title="新版本Supervisor-Deploy审批通知"
-        message_body="---------------------------------------\n\n"
-        message_body+="#### **📌 部署信息** \n\n"
-        message_body+="- **环境类型**:[ **$environment** ] \n\n"
-        message_body+="- **部署组件**:[ **Supervisor** ] \n\n"
-        message_body+="- **当前版本**:[ **$local_version** ] \n\n"
-        message_body+="- **部署版本**:[ **[${{ inputs.tag }}](https://github.com/iHost-Open-Source-Project/ha-supervisor/tree/ihost-${{ inputs.tag }})** ] \n\n"
-        message_body+="---------------------------------------\n\n"
-        message_body+="#### **👤 审批发起信息**  \n\n"
-        message_body+="- **发起人**:[ **${{ github.event.actor.name || github.actor }}** ] \n\n"
-        message_body+="- **发起时间**:[ **$timestamp** ] \n\n "
-        message_body+="#### **🔗 操作入口**   \n\n"
-        message_body+="- **✅ 审批链接**：**[点击跳转至审批确认页](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})** \n\n"
+        
+        if [ "${{ inputs.category }}" = "apply" ]; then
+          local_version=$(jq -r '.supervisor' "$path")
+          message_title="新版本Supervisor-Deploy审批通知"
+          message_body="---------------------------------------\n\n"
+          message_body+="#### **📌 部署信息** \n\n"
+          message_body+="- **环境类型**:[ **$environment** ] \n\n"
+          message_body+="- **部署组件**:[ **Supervisor** ] \n\n"
+          message_body+="- **当前版本**:[ **$local_version** ] \n\n"
+          message_body+="- **部署版本**:[ **[${{ inputs.tag }}](https://github.com/iHost-Open-Source-Project/ha-supervisor/tree/ihost-${{ inputs.tag }})** ] \n\n"
+          message_body+="---------------------------------------\n\n"
+          message_body+="#### **👤 审批发起信息**  \n\n"
+          message_body+="- **发起人**:[ **${{ github.event.actor.name || github.actor }}** ] \n\n"
+          message_body+="- **发起时间**:[ **$timestamp** ] \n\n "
+          message_body+="#### **🔗 操作入口**   \n\n"
+          message_body+="- **✅ 审批链接**：**[点击跳转至审批确认页](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})** \n\n"
+        fi
+        if [ "${{ inputs.category }}" = "result" ]; then 
+          message_title="Supervisor-Deploy部署结果通知"
+          message_body="---------------------------------------\n\n"
+          message_body+="#### **📌 ${{ inputs.env }}环境部署结束** \n\n"
+        fi
+        
         
         echo "message_title=$message_title" >> $GITHUB_OUTPUT
         echo "message_body<<EOF" >> $GITHUB_OUTPUT

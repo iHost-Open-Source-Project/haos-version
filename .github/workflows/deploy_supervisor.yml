@@ -9,7 +9,7 @@ on:
         default: '2025.05.5'
 
 jobs:
-  ding-talk-notify:
+  dev-notify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout target repository
@@ -18,12 +18,13 @@ jobs:
       - name: Send dingtalk
         uses: ./.github/actions/send-notify
         with:
-          env: 'DEV'
+          env: DEV
           version: ${{ inputs.tag }}
+          category: apply
 
   deploy-to-dev:
     runs-on: ubuntu-latest
-    needs: ding-talk-notify
+    needs: dev-notify
     environment:
       name: dev
       url: https://github.com/iHost-Open-Source-Project/haos-version/blob/main/dev.json
@@ -44,12 +45,9 @@ jobs:
 
       - name: Update dev.json
         run: |
-          # 读取并更新JSON文件
           echo "Updating supervisor version to ${{ inputs.tag }}"
           jq '.supervisor = "${{ inputs.tag }}"' dev.json > dev.tmp.json
           mv dev.tmp.json dev.json
-
-          # 查看更新后的内容
           cat dev.json
 
       - name: Commit and push changes
@@ -65,8 +63,29 @@ jobs:
           docker tag ghcr.io/ihost-open-source-project/armv7-hassio-supervisor:${{ inputs.tag }} ghcr.io/ihost-open-source-project/armv7-hassio-supervisor:dev
           docker push ghcr.io/ihost-open-source-project/armv7-hassio-supervisor:dev
 
-  deploy-to-stable:
+      - name: Send dingtalk
+        uses: ./.github/actions/send-notify
+        with:
+          env: DEV
+          version: ${{ inputs.tag }}
+          category: result
+
+  stable-notify:
     needs: deploy-to-dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+
+      - name: Send dingtalk
+        uses: ./.github/actions/send-notify
+        with:
+          env: STABLE
+          version: ${{ inputs.tag }}
+          category: apply
+
+  deploy-to-stable:
+    needs: stable-notify
     runs-on: ubuntu-latest
     environment:
       name: stable
@@ -110,3 +129,10 @@ jobs:
           docker tag ghcr.io/ihost-open-source-project/armv7-hassio-supervisor:${{ inputs.tag }} ghcr.io/ihost-open-source-project/armv7-hassio-supervisor:stable
           docker push ghcr.io/ihost-open-source-project/armv7-hassio-supervisor:latest
           docker push ghcr.io/ihost-open-source-project/armv7-hassio-supervisor:stable
+
+      - name: Send dingtalk
+        uses: ./.github/actions/send-notify
+        with:
+          env: STABLE
+          version: ${{ inputs.tag }}
+          category: result
