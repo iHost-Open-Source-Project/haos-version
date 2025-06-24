@@ -18,6 +18,7 @@ runs:
   steps:
     - name: Generate DingTalk message
       id: message
+      shell: bash
       run: |
         environment=""
         path=""
@@ -64,6 +65,7 @@ runs:
         echo "message: $message_body"
 
     - name: Send DingTalk notification
+      shell: bash
       id: send
       run: |
         message=$(cat <<EOF
