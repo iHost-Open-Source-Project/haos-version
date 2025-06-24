@@ -21,6 +21,7 @@ jobs:
           env: DEV
           version: ${{ inputs.tag }}
           category: apply
+          hook: ${{ secrets.DINGTALK_WEBHOOK }}
 
   deploy-to-dev:
     runs-on: ubuntu-latest
