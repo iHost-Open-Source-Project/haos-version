@@ -69,6 +69,7 @@ jobs:
           env: DEV
           version: ${{ inputs.tag }}
           category: result
+          hook: ${{ secrets.DINGTALK_WEBHOOK }}
 
   stable-notify:
     needs: deploy-to-dev
@@ -83,6 +84,7 @@ jobs:
           env: STABLE
           version: ${{ inputs.tag }}
           category: apply
+          hook: ${{ secrets.DINGTALK_WEBHOOK }}
 
   deploy-to-stable:
     needs: stable-notify
@@ -136,3 +138,4 @@ jobs:
           env: STABLE
           version: ${{ inputs.tag }}
           category: result
+          hook: ${{ secrets.DINGTALK_WEBHOOK }}

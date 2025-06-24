@@ -12,6 +12,10 @@ inputs:
     description: "Version to deploy"
     required: true
     example: "2025.6.1"
+  hook:
+    description: "Hook to call"
+    required: true
+    example: "***"
 
 runs:
   using: "composite"
@@ -82,6 +86,6 @@ runs:
         EOF
         )
         
-        response=$(curl -s -X POST "${{ secrets.DINGTALK_WEBHOOK }}" \
+        response=$(curl -s -X POST "${{ inputs.hook }}" \
           -H "Content-Type: application/json" \
           -d "$message")
