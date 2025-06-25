@@ -177,3 +177,19 @@ jobs:
           git commit -m "Sync stable.json homeassistant core version"
           git push
           echo "update=true" >> "$GITHUB_OUTPUT"
+          
+      - name: Trigger Build Image
+        uses: actions/github-script@v7.0.1
+        if: steps.compare_supervisor.outputs.supervisor_diff == 'true'
+        with:
+          github-token: ${{ secrets.MOSUXIAO_TOKEN }}
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: "iHost-Open-Source-Project",
+              repo: "actions-runner",
+              workflow_id: "supervisor_release_armv7.yml",
+              ref: "main",
+              inputs: {
+                tag:"${{ steps.remote.outputs.remote_supervisor }}"
+              }
+            })
