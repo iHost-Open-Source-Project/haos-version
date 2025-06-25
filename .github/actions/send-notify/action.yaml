@@ -47,7 +47,7 @@ runs:
           message_body+="- **环境类型**:[ **$environment** ] \n\n"
           message_body+="- **部署组件**:[ **Supervisor** ] \n\n"
           message_body+="- **当前版本**:[ **$local_version** ] \n\n"
-          message_body+="- **部署版本**:[ **[${{ inputs.tag }}](https://github.com/iHost-Open-Source-Project/ha-supervisor/tree/ihost-${{ inputs.tag }})** ] \n\n"
+          message_body+="- **部署版本**:[ **[${{ inputs.version }}](https://github.com/iHost-Open-Source-Project/ha-supervisor/tree/ihost-${{ inputs.version }})** ] \n\n"
           message_body+="---------------------------------------\n\n"
           message_body+="#### **👤 审批发起信息**  \n\n"
           message_body+="- **发起人**:[ **${{ github.event.actor.name || github.actor }}** ] \n\n"
