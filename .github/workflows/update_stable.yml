@@ -198,7 +198,7 @@ jobs:
           
       - name: Trigger Build Image
         uses: actions/github-script@v7.0.1
-        if: steps.compare_supervisor.outputs.supervisor_diff == 'true' && step.check.outputs.should_build == 'true'
+        if: steps.compare_supervisor.outputs.supervisor_diff == 'true' && steps.check.outputs.should_build == 'true'
         with:
           github-token: ${{ secrets.MOSUXIAO_TOKEN }}
           script: |
