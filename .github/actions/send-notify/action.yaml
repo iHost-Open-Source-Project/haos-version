@@ -59,6 +59,8 @@ runs:
           message_title="Supervisor-Deploy部署结果通知"
           message_body="---------------------------------------\n\n"
           message_body+="#### **📌 ${{ inputs.env }}环境部署结束** \n\n"
+          message_body+="**🔄️ 切换STABLE环境指令**: ** ha supervisor options --channel stable ** \n\n"
+          message_body+="**🔄️ 切换DEV环境指令**: ** ha supervisor options --channel dev ** \n\n"
         fi
         
         
@@ -77,7 +79,7 @@ runs:
           "msgtype": "markdown",
           "markdown": {
             "title": "${{ steps.message.outputs.message_title }}",
-            "text": "### ⚙️ **${{ inputs.env }}环境Supervisor部署审批申请**  \n\n ${{ steps.message.outputs.message_body }}"
+            "text": "### ⚙️ **${{ inputs.env }}环境Supervisor部署审批**  \n\n ${{ steps.message.outputs.message_body }}"
           },
           "at": {
             "isAtAll": true
