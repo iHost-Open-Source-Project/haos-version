@@ -181,17 +181,17 @@ jobs:
       - name: Check had built image
         id: check
         run: |
-          curl -sSL \
+          TAG=${{inputs.tag}}
+          echo "Checking for image tag: $TAG"
+          response=$(curl -sSL \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/orgs/iHost-Open-Source-Project/packages/container/armv7-hassio-supervisor/versions" |
-            jq -e --arg TAG "${{ steps.remote.outputs.remote_supervisor }}" '.[] | select(.metadata.container.tags[]? == $TAG)' > /dev/null 2>&1
-          echo "tag=${{inputs.tag}}"
-          if [ $? -eq 0 ]; then
-            echo "${{ steps.remote.outputs.remote_supervisor }} Image is exist!"
+            -H "Authorization: ***" \
+            "https://api.github.com/orgs/iHost-Open-Source-Project/packages/container/armv7-hassio-supervisor/versions")
+          if echo "$response" | jq -e --arg TAG "$TAG" '.[] | select(.metadata.container.tags[]? == $TAG)' > /dev/null 2>&1; then
+            echo "$TAG Image is exist!"
             echo "should_build=false" >> $GITHUB_OUTPUT
           else
-            echo "${{ steps.remote.outputs.remote_supervisor }} Image is not exist!"
+            echo "$TAG Image is not exist!"
             echo "should_build=true" >> $GITHUB_OUTPUT
           fi
 
