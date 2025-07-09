@@ -181,7 +181,7 @@ jobs:
       - name: Check had built image
         id: check
         run: |
-          TAG=${{inputs.tag}}
+          TAG=${{ steps.remote.outputs.remote_supervisor }}
           echo "Checking for image tag: $TAG"
           response=$(curl -sSL \
             -H "Accept: application/vnd.github+json" \
