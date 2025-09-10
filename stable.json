@@ -46,7 +46,7 @@
     "generic-x86-64": "16.0",
     "generic-aarch64": "16.0",
     "khadas-vim3": "16.0",
-    "ihost": "16.1"
+    "ihost": "16.2"
   },
   "hassos-upgrade": {
     "11": "11.5",
