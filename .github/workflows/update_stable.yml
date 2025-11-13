@@ -76,11 +76,11 @@ jobs:
           homeassistant_diff=false
           if [ "${{ steps.local.outputs.local_home  }}" != "${{ steps.remote.outputs.remote_home}}" ]; then
             homeassistant_diff=true
-            # Update the local file's homeassistant field
-            jq --argjson newHome '${{steps.remote.outputs.remote_home}}' '.homeassistant = $newHome' "$LOCAL_FILE" > temp.json
-            jq --argjson newHome '${{steps.remote.outputs.remote_home}}' '.homeassistant = $newHome' "dev.json" > temp_1.json
-            mv temp.json "$LOCAL_FILE"
-            mv temp_1.json "dev.json"
+#            # Update the local file's homeassistant field
+#            jq --argjson newHome '${{steps.remote.outputs.remote_home}}' '.homeassistant = $newHome' "$LOCAL_FILE" > temp.json
+#            jq --argjson newHome '${{steps.remote.outputs.remote_home}}' '.homeassistant = $newHome' "dev.json" > temp_1.json
+#            mv temp.json "$LOCAL_FILE"
+#            mv temp_1.json "dev.json"
           fi
           echo "homeassistant_diff=$homeassistant_diff" >>  "$GITHUB_OUTPUT"
           echo "homeassistant_diff=$homeassistant_diff"
@@ -108,7 +108,7 @@ jobs:
           fi
           
           if [ "${{ steps.compare_core.outputs.homeassistant_diff }}" == 'true' ]; then
-               message_body+="**Homeassistant Core版本号已同步更新:** \n\n **版本信息:**\n\n"
+               message_body+="**Homeassistant Core版本号需要更新:** \n\n **版本信息:**\n\n"
     
               local_versions='${{ steps.local.outputs.local_home }}'
               remote_versions='${{ steps.remote.outputs.remote_home }}' 
@@ -167,16 +167,16 @@ jobs:
             exit 1
           fi
 
-      - name: Commit and Push changes if needed
-        id: commit_and_push
-        if: steps.compare_core.outputs.homeassistant_diff == 'true' && steps.send.outputs.notification_status == 'success'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add stable.json dev.json
-          git commit -m "Sync stable.json homeassistant core version"
-          git push
-          echo "update=true" >> $GITHUB_OUTPUT
+#      - name: Commit and Push changes if needed
+#        id: commit_and_push
+#        if: steps.compare_core.outputs.homeassistant_diff == 'true' && steps.send.outputs.notification_status == 'success'
+#        run: |
+#          git config --local user.email "action@github.com"
+#          git config --local user.name "GitHub Action"
+#          git add stable.json dev.json
+#          git commit -m "Sync stable.json homeassistant core version"
+#          git push
+#          echo "update=true" >> $GITHUB_OUTPUT
 
       - name: Check had built image
         id: check
