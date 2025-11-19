@@ -174,3 +174,38 @@ jobs:
 #          git commit -m "Sync stable.json homeassistant core version"
 #          git push
 #          echo "update=true" >> $GITHUB_OUTPUT
+
+      - name: Check had built image
+        id: check
+        run: |
+          TAG=${{ steps.remote.outputs.remote_supervisor }}
+          echo "Checking for image tag: $TAG"
+          response=$(curl -sSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.MOSUXIAO_TOKEN }}" \
+            "https://api.github.com/orgs/iHost-Open-Source-Project/packages/container/armv7-hassio-supervisor/versions")
+          echo "$response"
+          if echo "$response" | jq -e --arg TAG "$TAG" '.[] | select(.metadata.container.tags[]? == $TAG)' > /dev/null 2>&1; then
+            echo "$TAG Image is exist!"
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          else
+            echo "$TAG Image is not exist!"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
+
+      - name: Trigger Build Image
+        uses: actions/github-script@v7.0.1
+        if: steps.compare_supervisor.outputs.supervisor_diff == 'true' && steps.check.outputs.should_build == 'true'
+        with:
+          github-token: ${{ secrets.MOSUXIAO_TOKEN }}
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: "iHost-Open-Source-Project",
+              repo: "actions-runner",
+              workflow_id: "supervisor_release_armv7.yml",
+              ref: "main",
+              inputs: {
+                tag:"${{ steps.remote.outputs.remote_supervisor }}"
+              }
+            })
