@@ -134,7 +134,7 @@ jobs:
 
       - name: Send DingTalk notification
         id: send
-        if: steps.compare_core.outputs.homeassistant_diff == 'true' || steps.compare_supervisor.outputs.supervisor_diff == 'true'
+        if: steps.compare_core.outputs.homeassistant_diff == 'true'
         run: |
           timestamp=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S%:z")
 
