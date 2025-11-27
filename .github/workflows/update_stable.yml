@@ -98,6 +98,7 @@ jobs:
           message_body+="---------------------------------------\n\n"
           
           if [ "${{ steps.compare_supervisor.outputs.supervisor_diff }}" == 'true' ]; then
+              echo "Supervisor版本需要更新:[${{ steps.local.outputs.local_supervisor }}] ➡️ [${{ steps.remote.outputs.remote_supervisor }}]"
               # message_body+="**Supervisor版本需要更新:** \n\n **版本信息:[${{ steps.local.outputs.local_supervisor }}] ➡️ [${{ steps.remote.outputs.remote_supervisor }}]**\n\n"
               # message_body+="---------------------------------------\n\n"
           fi
